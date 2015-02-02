@@ -1,18 +1,13 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ *
+ * @author Isaac Kaufman
+ * @version 0.9
  */
-package whschatserver;
-
 
 import java.net.*;
 import java.io.*;
 import java.util.*;
-/**
- *
- * @author Sweg
- */
+
 public class WHSChatServer {
 
     // port to listen on
@@ -28,55 +23,54 @@ public class WHSChatServer {
     public static void main (String[] args) throws IOException
     {
         if (args.length > 0)
-	{
+		{
             PORT = Integer.parseInt(args[0]);
-	}
-	else
-	{
+		}
+		else
+		{
             System.out.println("Usage: java server <PORT>");
             System.exit(1);
-	}
-	System.out.println("The server has been started on port " + PORT);
-	ServerSocket listener = new ServerSocket(PORT);
+		}
+		System.out.println("The server has been started on port " + PORT);
+		ServerSocket listener = new ServerSocket(PORT);
 	
-	try
-	{
+		try
+		{
             while (true)
             {
-		(new clientHandler(listener.accept())).start();
+				(new clientHandler(listener.accept())).start();
             }
-	}
-	finally
-	{
+		}
+		finally
+		{
             listener.close();
-	}
+		}
     }
 	
     private static class clientHandler extends Thread
     {
-	private String name;
-	private Socket socket;
-	private BufferedReader in;
-	private PrintWriter out;
-	// message of the day
-	private String motd;
+		private String name;
+		private Socket socket;
+		private BufferedReader in;
+		private PrintWriter out;
 	
-	// construct a thread to talk across a given socket to the client
-	public clientHandler (Socket socket)
-	{
-		this.socket = socket;	
-	}
+		// construct a thread to talk across a given socket to the client
+		public clientHandler (Socket socket)
+		{
+			this.socket = socket;	
+		}
 	
-	public void run ()
-	{
+		public void run ()
+		{
             try
             {
-		// create in and out streams for the socket connection
-		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		out = new PrintWriter(socket.getOutputStream(), true);
+				// assign in and out streams for the socket connection
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				out = new PrintWriter(socket.getOutputStream(), true);
 		
-		while (true)
-		{
+				// get username from client until username is unique
+				while (true)
+				{
                     out.println("SUBMITNAME");
                     if ((name = in.readLine()) != null)
                     {
@@ -89,23 +83,26 @@ public class WHSChatServer {
                             }
                         }
                     }
-		}
+				}
 				
-		// add the PrintWriter to the HashSet
+				// tell the client the name has been accepted
+				// print to the terminal that the client has connected
+				// print motd to client
+				// broadcast that a new client has connected to the server
+				// add the PrintWriter to the HashSet
                 out.println("NAMEACCEPTED");
                 System.out.println(name + " connected.");
-		motd = "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected.";
-		out.println("SYS" + this.motd);
-		for (PrintWriter writer : writers)
+				out.println("SYS" + "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected.";
+				for (PrintWriter writer : writers)
                 {
                     writer.println("SYS" + name + " has joined the chat room!");
-		}
+				}
                 writers.add(out);
 				
-		// broadcast messages
-		String input;
-		while (true)
-		{
+				// broadcast messages
+				String input;
+				while (true)
+				{
                     if ((input = in.readLine()) != null)
                     {
                         if (!input.startsWith("!"))
@@ -115,23 +112,26 @@ public class WHSChatServer {
                                 writer.println("MSG" + name + ": " + input);
                             }
                         }
-			else if (input.startsWith("!"))
-                        {
+						else
+						{
                             if (input.startsWith("!showclients"))
                             {
-				String list = "The clients currently connected are:\n";
-				for (String name : names)
-                                {
-                                    System.out.println(list);
-                                    list = list + name + "\n";
-                                }
-                                out.println("USER" + list);
+								String list = "The clients currently connected are:";
+								synchronized (names)
+								{
+									for (String name : names)
+									{
+										list = list + " " + name;
+									}
+									out.println("USER" + list);
+									break;
+								}
                             }
                         }
                     }
                     else
                     {
-			return;
+						return;
                     }
 		}
             }
