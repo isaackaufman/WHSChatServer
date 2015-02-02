@@ -1,7 +1,7 @@
 /**
  *
  * @author Isaac Kaufman
- * @version 0.9
+ * @version 0.9.5
  */
 
 import java.net.*;
@@ -28,7 +28,7 @@ public class WHSChatServer {
 		}
 		else
 		{
-            System.out.println("Usage: java server <PORT>");
+            System.out.println("Usage: java WHSChatServer <PORT>");
             System.exit(1);
 		}
 		System.out.println("The server has been started on port " + PORT);
@@ -92,7 +92,7 @@ public class WHSChatServer {
 				// add the PrintWriter to the HashSet
                 out.println("NAMEACCEPTED");
                 System.out.println(name + " connected.");
-				out.println("SYS" + "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected.";
+				out.println("SYS" + "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected.");
 				for (PrintWriter writer : writers)
                 {
                     writer.println("SYS" + name + " has joined the chat room!");
