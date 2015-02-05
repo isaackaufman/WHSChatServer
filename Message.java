@@ -2,13 +2,10 @@
  * @author Isaac Kaufman
  * @version 0.9
  */
-enum Type
-{
-	// enumeration for type of Message sent to or from server
-	SUBMITNAME, NAMEACCEPTED, SYS, USER
-}
+
 public class Message
 {
+
 	// declare instance variables
 	
 	// username of client who sent the Message object
@@ -33,7 +30,22 @@ public class Message
 		this.sender = sender;
 		this.message = message;
 		this.type = type;
-	}		
+	}
+
+	// constructor for Messages from server to establish username or other protocol processes
+	public Message (Type type)
+	{
+		this.sender = null;
+		this.message = null;
+		this.type = type;
+	}
+
+	public Message (Type type, String message)
+	{
+		this.sender = null;
+		this.message = message;
+		this.type = type;
+	}
 	
 	// return value of message instance variable - mainly for printing
 	public String getMessage()

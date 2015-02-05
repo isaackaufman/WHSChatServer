@@ -17,12 +17,13 @@ public class WHSChatServer {
     private static HashSet<String> names = new HashSet<String>();
     
     // HashSet of PrintWriters for each socket connection
-    private static HashSet<PrintWriter> writers = new HashSet<PrintWriter>();
+    private static HashSet<ObjectOutputStream> writers = new HashSet<ObjectOutputStream>();
 	
 	
     public static void main (String[] args) throws IOException
     {
-        if (args.length > 0)
+    	// start server on port given by first argument
+        if (args.length == 1)
 		{
             PORT = Integer.parseInt(args[0]);
 		}
@@ -31,18 +32,26 @@ public class WHSChatServer {
             System.out.println("Usage: java WHSChatServer <PORT>");
             System.exit(1);
 		}
+
 		System.out.println("The server has been started on port " + PORT);
+
+		// create ServerSocket for clients to connect to
 		ServerSocket listener = new ServerSocket(PORT);
-	
 		try
 		{
             while (true)
             {
-				(new clientHandler(listener.accept())).start();
+            	// create a clientHandler object for each accepted connection from clients and start the thread
+				Socket clientSocket = listener.accept();
+
+				System.out.println("Incoming connection from " + clientSocket.getInetAddress().getHostAddress() + " accepted.");
+
+				new clientHandler(clientSocket).start();
             }
 		}
 		finally
 		{
+			// close socket
             listener.close();
 		}
     }
@@ -51,10 +60,10 @@ public class WHSChatServer {
     {
 		private String name;
 		private Socket socket;
-		private BufferedReader in;
-		private PrintWriter out;
+		private ObjectInputStream in;
+		private ObjectOutputStream out;
 	
-		// construct a thread to talk across a given socket to the client
+		// construct a thread to talk across a socket to the client
 		public clientHandler (Socket socket)
 		{
 			this.socket = socket;	
@@ -64,14 +73,16 @@ public class WHSChatServer {
 		{
             try
             {
+
+            	// *** SET UP CLIENT ***
 				// assign in and out streams for the socket connection
-				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				out = new PrintWriter(socket.getOutputStream(), true);
+				in = new ObjectInputStream(socket.getInputStream());
+				out = new ObjectOutputStream(socket.getOutputStream());
 		
 				// get username from client until username is unique
 				while (true)
 				{
-                    out.println("SUBMITNAME");
+                    out.writeObject(new Message(Type.SUBMITNAME));
                     if ((name = in.readLine()) != null)
                     {
                         synchronized (names)
@@ -90,31 +101,32 @@ public class WHSChatServer {
 				// print motd to client
 				// broadcast that a new client has connected to the server
 				// add the PrintWriter to the HashSet
-                out.println("NAMEACCEPTED");
-                System.out.println(name + " connected.");
-				out.println("SYS" + "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected.");
-				for (PrintWriter writer : writers)
+                out.writeObject(Type.NAMEACCEPTED);
+                System.out.println(this.socket.getInetAddress() + " authenticated with username " + name);
+				out.writeObject(new Message(Type.SYS, "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected."));
+				for (ObjectOutputStream writer : writers)
                 {
-                    writer.println("SYS" + name + " has joined the chat room!");
+                    writer.writeObject(new Message(Type.SYS, name + " has joined the chat room!"));
 				}
                 writers.add(out);
+
 				
-				// broadcast messages
-				String input;
+				// *** NORMAL COMMUNICATION HANDLING ***
+				String message;
 				while (true)
 				{
-                    if ((input = in.readLine()) != null)
+                    if ((message = in.readLine()) != null)
                     {
-                        if (!input.startsWith("!"))
+                        if (!message.startsWith("!"))
                         {
-                            for (PrintWriter writer : writers)
+                            for (ObjectOutputStream writer : writers)
                             {
-                                writer.println("MSG" + name + ": " + input);
+                                writer.writeObject(new Message(name, message, Type.USER));
                             }
                         }
 						else
 						{
-                            if (input.startsWith("!showclients"))
+                            if (message.startsWith("!showclients"))
                             {
 								String list = "The clients currently connected are:";
 								synchronized (names)
@@ -123,7 +135,7 @@ public class WHSChatServer {
 									{
 										list = list + " " + name;
 									}
-									out.println("USER" + list);
+									out.writeObject(new Message(Type.SYS, list));
 									break;
 								}
                             }
@@ -133,33 +145,34 @@ public class WHSChatServer {
                     {
 						return;
                     }
-		}
+				}
             }
             catch (IOException e)
             {
-		// do something
+				// do something
             }
             finally
             {
-		// close connections and clean up
+			// close connections and clean up
                 System.out.println(name + " disconnected.");
-		names.remove(name);
-		writers.remove(out);
-		for (PrintWriter writer : writers)
-		{   
-                    writer.println("SYS" + name + " has left the chat room.");
-		}
-		try
-		{
-                    out.flush();
-                    out.close();
-                    in.close();
-                    socket.close();
-		}
-		catch (IOException e)
-		{
-                    // do something
-		}
+				names.remove(name);
+				writers.remove(out);
+
+				try
+				{
+					for (ObjectOutputStream writer : writers)
+					{   
+            			writer.writeObject(new Message(Type.SYS, name + "has disconnected."));
+					}
+					out.flush();
+                	out.close();
+                	in.close();
+                	socket.close();
+                }
+                catch (IOException e)
+                {
+                	// stuff
+                }
             }
         }
     }
