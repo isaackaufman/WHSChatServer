@@ -76,8 +76,8 @@ public class WHSChatServer {
 
             	// *** SET UP CLIENT ***
 				// assign in and out streams for the socket connection
-				in = new ObjectInputStream(socket.getInputStream());
 				out = new ObjectOutputStream(socket.getOutputStream());
+				in = new ObjectInputStream(socket.getInputStream());
 		
 				// get username from client until username is unique
 				while (true)
