@@ -3,17 +3,19 @@
  * @version 0.9
  */
 
-public class Message
+import java.io.Serializable;
+
+public class Message implements Serializable
 {
 
 	// declare instance variables
 	
 	// username of client who sent the Message object
-	String sender;
+	private String sender;
 	// message text
-	String message;
+	private String message;
 	// type of message being sent
-	Type type;
+	private Type type;
 	
 	// constructor for no arguments
 	// TODO - consider removing - should this be illegal?
@@ -53,9 +55,19 @@ public class Message
 		return this.message;
 	}
 	
+	public Type getType()
+	{
+		return this.type;
+	}
 	// check if message is a valid length
 	public boolean isValid()
 	{
 		return this.message.length() > 0 && this.message.length() < 250;
+	}
+
+	public enum Type
+	{
+		// enumeration for type of Message sent to or from server
+		SUBMITNAME, NAMEACCEPTED, SYS, USER
 	}
 }

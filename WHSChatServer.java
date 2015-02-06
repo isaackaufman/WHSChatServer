@@ -58,6 +58,7 @@ public class WHSChatServer {
 	
     private static class clientHandler extends Thread
     {
+    	private Message message;
 		private String name;
 		private Socket socket;
 		private ObjectInputStream in;
@@ -82,9 +83,11 @@ public class WHSChatServer {
 				// get username from client until username is unique
 				while (true)
 				{
-                    out.writeObject(new Message(Type.SUBMITNAME));
-                    if ((name = in.readLine()) != null)
+					out.writeObject(new UsernameProtocol(5, 25, false));
+                    out.writeObject(new Message(Message.Type.SUBMITNAME));
+                    if ((message = (Message) in.readObject()) != null)
                     {
+                    	name = message.getMessage();
                         synchronized (names)
                         {
                             if (!names.contains(name))
@@ -101,12 +104,12 @@ public class WHSChatServer {
 				// print motd to client
 				// broadcast that a new client has connected to the server
 				// add the PrintWriter to the HashSet
-                out.writeObject(Type.NAMEACCEPTED);
+                out.writeObject(new Message(Message.Type.NAMEACCEPTED));
                 System.out.println(this.socket.getInetAddress() + " authenticated with username " + name);
-				out.writeObject(new Message(Type.SYS, "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected."));
+				out.writeObject(new Message(Message.Type.SYS, "Welcome to the Chat Room " + name + ", there are " + writers.size() + " other clients connected."));
 				for (ObjectOutputStream writer : writers)
                 {
-                    writer.writeObject(new Message(Type.SYS, name + " has joined the chat room!"));
+                    writer.writeObject(new Message(Message.Type.SYS, name + " has joined the chat room!"));
 				}
                 writers.add(out);
 
@@ -121,7 +124,7 @@ public class WHSChatServer {
                         {
                             for (ObjectOutputStream writer : writers)
                             {
-                                writer.writeObject(new Message(name, message, Type.USER));
+                                writer.writeObject(new Message(name, message, Message.Type.USER));
                             }
                         }
 						else
@@ -135,7 +138,7 @@ public class WHSChatServer {
 									{
 										list = list + " " + name;
 									}
-									out.writeObject(new Message(Type.SYS, list));
+									out.writeObject(new Message(Message.Type.SYS, list));
 									break;
 								}
                             }
@@ -147,7 +150,7 @@ public class WHSChatServer {
                     }
 				}
             }
-            catch (IOException e)
+            catch (IOException | ClassNotFoundException e)
             {
 				// do something
             }
@@ -162,7 +165,7 @@ public class WHSChatServer {
 				{
 					for (ObjectOutputStream writer : writers)
 					{   
-            			writer.writeObject(new Message(Type.SYS, name + "has disconnected."));
+            			writer.writeObject(new Message(Message.Type.SYS, name + "has disconnected."));
 					}
 					out.flush();
                 	out.close();
