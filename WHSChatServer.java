@@ -79,18 +79,13 @@ public class WHSChatServer {
 				// assign in and out streams for the socket connection
 				out = new ObjectOutputStream(socket.getOutputStream());
 				in = new ObjectInputStream(socket.getInputStream());
-		
+				
 				// get username from client until username is unique
 				while (true)
 				{
-<<<<<<< HEAD
 					out.writeObject(new UsernameProtocol(5, 25, false));
                     out.writeObject(new Message(Message.Type.SUBMITNAME));
                     if ((message = (Message) in.readObject()) != null)
-=======
-                    out.writeObject(new Message(Message.Type.SUBMITNAME));
-                    if ((name = in.readLine()) != null)
->>>>>>> origin/master
                     {
                     	name = message.getMessage();
                         synchronized (names)
