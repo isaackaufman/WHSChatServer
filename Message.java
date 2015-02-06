@@ -3,7 +3,9 @@
  * @version 0.9
  */
 
-public class Message
+import java.io.Serializable;
+
+public class Message implements Serializable
 {
 
 	// declare instance variables
@@ -53,9 +55,19 @@ public class Message
 		return this.message;
 	}
 	
+	public Type getType()
+	{
+		return this.type;
+	}
 	// check if message is a valid length
 	public boolean isValid()
 	{
 		return this.message.length() > 0 && this.message.length() < 250;
+	}
+
+	public enum Type
+	{
+		// enumeration for type of Message sent to or from server
+		SUBMITNAME, NAMEACCEPTED, SYS, USER
 	}
 }
