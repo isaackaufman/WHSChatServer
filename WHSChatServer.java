@@ -81,9 +81,9 @@ public class WHSChatServer {
 				in = new ObjectInputStream(socket.getInputStream());
 				
 				// get username from client until username is unique
+				out.writeObject(new UsernameProtocol(5, 25, false));
 				while (true)
 				{
-					out.writeObject(new UsernameProtocol(5, 25, false));
                     out.writeObject(new Message(Message.Type.SUBMITNAME));
                     if ((message = (Message) in.readObject()) != null)
                     {
@@ -115,21 +115,21 @@ public class WHSChatServer {
 
 				
 				// *** NORMAL COMMUNICATION HANDLING ***
-				String message;
+				Message message;
 				while (true)
 				{
-                    if ((message = in.readLine()) != null)
+                    if ((message = (Message) in.readObject()) != null)
                     {
-                        if (!message.startsWith("!"))
+                        if (!message.getMessage().startsWith("!"))
                         {
                             for (ObjectOutputStream writer : writers)
                             {
-                                writer.writeObject(new Message(name, message, Message.Type.USER));
+                                writer.writeObject(new Message(name, message.getMessage(), Message.Type.USER));
                             }
                         }
 						else
 						{
-                            if (message.startsWith("!showclients"))
+                            if (message.getMessage().startsWith("!showclients"))
                             {
 								String list = "The clients currently connected are:";
 								synchronized (names)
@@ -139,7 +139,6 @@ public class WHSChatServer {
 										list = list + " " + name;
 									}
 									out.writeObject(new Message(Message.Type.SYS, list));
-									break;
 								}
                             }
                         }
@@ -165,7 +164,7 @@ public class WHSChatServer {
 				{
 					for (ObjectOutputStream writer : writers)
 					{   
-            			writer.writeObject(new Message(Message.Type.SYS, name + "has disconnected."));
+            			writer.writeObject(new Message(Message.Type.SYS, name + " has disconnected."));
 					}
 					out.flush();
                 	out.close();

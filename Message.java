@@ -14,7 +14,7 @@ public class Message implements Serializable
 	private String sender;
 	// message text
 	private String message;
-	// type of message being sent
+	// type of message being sent - enum Type in file
 	private Type type;
 	
 	// constructor for no arguments
@@ -49,6 +49,10 @@ public class Message implements Serializable
 		this.type = type;
 	}
 	
+	public String getSender()
+	{
+		return this.sender;
+	}
 	// return value of message instance variable - mainly for printing
 	public String getMessage()
 	{
